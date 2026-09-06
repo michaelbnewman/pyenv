@@ -5,9 +5,6 @@ name: No Response
 on:
   issue_comment:
     types: [created]
-  schedule:
-    # Schedule for ten minutes after the hour, every 2 hours
-    - cron: '10 */2 * * *'
 
 permissions: {}
 jobs:
