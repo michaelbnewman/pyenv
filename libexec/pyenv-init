@@ -190,7 +190,11 @@ function help_() {
 }
 
 function print_posix_shell_setup() {
-  echo 'export PYENV_ROOT="$HOME/.pyenv"'
+  if [ -n "$PYENV_ROOT" ] && [ "$PYENV_ROOT" != "$HOME/.pyenv" ]; then
+    printf 'export PYENV_ROOT="%s"\n' "$PYENV_ROOT"
+  else
+    echo 'export PYENV_ROOT="$HOME/.pyenv"'
+  fi
   echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"'
   echo 'eval "$(pyenv init - '$shell')"'
 }

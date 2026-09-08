@@ -99,7 +99,7 @@ OUT
   run pyenv-init --install
   assert_success
 
-  expected_setup=$'export PYENV_ROOT="$HOME/.pyenv"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - bash)"'
+  expected_setup=$'export PYENV_ROOT="'"$PYENV_ROOT"$'"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - bash)"'
   assert_equal "$expected_setup" "$(cat "$HOME/.bashrc")"
   assert_equal "$expected_setup" "$(cat "$HOME/.profile")"
 }
@@ -111,7 +111,7 @@ OUT
   run pyenv-init --install bash
   assert_success
 
-  expected_setup=$'export PYENV_ROOT="$HOME/.pyenv"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - bash)"'
+  expected_setup=$'export PYENV_ROOT="'"$PYENV_ROOT"$'"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - bash)"'
   assert_equal "$expected_setup" "$(cat "$HOME/.bashrc")"
   assert_equal "$expected_setup" "$(cat "$HOME/.bash_profile")"
   assert [ ! -e "$HOME/.profile" ]
@@ -123,9 +123,45 @@ OUT
   run pyenv-init --install zsh
   assert_success
 
-  expected_setup=$'export PYENV_ROOT="$HOME/.pyenv"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - zsh)"'
+  expected_setup=$'export PYENV_ROOT="'"$PYENV_ROOT"$'"\n[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"\neval "$(pyenv init - zsh)"'
   assert_equal "$expected_setup" "$(cat "$HOME/.zshrc")"
   assert_equal "$expected_setup" "$(cat "$HOME/.zprofile")"
+}
+
+@test "install setup uses custom PYENV_ROOT" {
+  mkdir -p "$HOME"
+
+  run pyenv-init --install bash
+  assert_success
+
+  grep -Fx "export PYENV_ROOT=\"$PYENV_ROOT\"" "$HOME/.bashrc"
+  ! grep -Fx 'export PYENV_ROOT="$HOME/.pyenv"' "$HOME/.bashrc"
+}
+
+@test "install setup uses default PYENV_ROOT when unset" {
+  mkdir -p "$HOME"
+  unset PYENV_ROOT
+
+  run pyenv-init --install bash
+  assert_success
+
+  grep -Fx 'export PYENV_ROOT="$HOME/.pyenv"' "$HOME/.bashrc"
+}
+
+@test "install setup uses default PYENV_ROOT when it equals HOME/.pyenv" {
+  export PYENV_ROOT="$HOME/.pyenv"
+  mkdir -p "$HOME"
+
+  run pyenv-init --install bash
+  assert_success
+
+  grep -Fx 'export PYENV_ROOT="$HOME/.pyenv"' "$HOME/.bashrc"
+}
+
+@test "custom PYENV_ROOT instructions" {
+  run pyenv-init bash
+  assert [ "$status" -eq 1 ]
+  assert_line "export PYENV_ROOT=\"$PYENV_ROOT\""
 }
 
 @test "install setup for fish startup file" {
